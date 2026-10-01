@@ -639,6 +639,58 @@
 
     textarea.form-input { resize: vertical; height: 80px; }
 
+    /* JSON 上傳區域樣式 */
+    .json-upload-card {
+      background: #11151f;
+      border: 1px dashed var(--accent-blue);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+      text-align: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .json-upload-card:hover {
+      background: #161d2b;
+      border-color: #70b8ff;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .json-upload-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .json-upload-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .json-btn-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .btn-xs {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: #1d2331;
+      color: #94a3b8;
+      border: 1px solid #303a4e;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-xs:hover {
+      color: var(--text-main);
+      border-color: var(--accent-blue);
+      background: #232c3d;
+    }
+
     .typing-indicator {
       display: inline-flex;
       gap: 4px;
@@ -824,6 +876,43 @@
       <div class="modal-header">
         <div class="modal-title">建立 / 導入自訂角色模組 (New Character)</div>
         <button class="btn-secondary" onclick="closeAddCharModal()">✕</button>
+      </div>
+
+      <!-- 隱藏的檔案上傳 input -->
+      <input type="file" id="json-file-input" accept=".json" style="display: none;" onchange="handleJsonFileSelect(event)">
+
+      <!-- JSON 上傳與導入區塊 -->
+      <div class="json-upload-card" onclick="triggerJsonUpload()" id="json-drop-zone">
+        <div class="json-upload-title">
+          <span>📁</span>
+          <span>上傳角色 JSON 檔案（點此瀏覽或將檔案拖放至此）</span>
+        </div>
+        <div class="json-upload-subtitle">
+          支援本模擬器 JSON、SillyTavern 角色卡 V2、或自訂 Roleplay JSON
+        </div>
+        <div class="json-btn-row" onclick="event.stopPropagation()">
+          <button type="button" class="btn-xs" onclick="triggerJsonUpload()">選擇 .json 檔案</button>
+          <button type="button" class="btn-xs" onclick="togglePasteJsonBox()">直接貼上 JSON 代碼</button>
+          <button type="button" class="btn-xs" onclick="downloadSampleJson()">下載範例 JSON</button>
+        </div>
+      </div>
+
+      <!-- 貼上 JSON 文本的摺疊區塊 -->
+      <div class="form-group" id="paste-json-container" style="display: none;">
+        <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>貼上 JSON 代碼內容</span>
+          <button type="button" class="btn-xs" onclick="parsePastedJson()" style="color: var(--accent-blue); border-color: var(--accent-blue);">解析並填入 ➔</button>
+        </label>
+        <textarea class="form-input" id="pasted-json-text" placeholder='貼上例如 {"name": "...", "role": "...", "traits": "...", "opening": "..."}' style="height: 85px; font-family: var(--font-mono); font-size: 11px;"></textarea>
+      </div>
+
+      <!-- 狀態提示列 -->
+      <div id="json-parse-status" style="display: none; font-size: 12px; padding: 6px 12px; border-radius: 6px; margin-bottom: 12px; background: rgba(79, 161, 242, 0.1); border: 1px solid var(--accent-blue); color: var(--accent-blue);"></div>
+
+      <div style="display: flex; align-items: center; gap: 8px; margin: 12px 0;">
+        <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+        <span style="font-size: 11px; color: var(--text-dim);">或手動修改/確認下方角色欄位</span>
+        <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
       </div>
 
       <div class="form-group">
@@ -1312,11 +1401,176 @@
     }
 
     // 新增/導入自訂角色
+    let tempJsonMetadata = null; // 暫存 JSON 中的進階狀態值
+
     function openAddCharModal() {
+      tempJsonMetadata = null;
+      document.getElementById('json-parse-status').style.display = 'none';
+      document.getElementById('paste-json-container').style.display = 'none';
       document.getElementById('add-char-modal').style.display = 'flex';
+      setupJsonDropZone();
     }
+
     function closeAddCharModal(e) {
       document.getElementById('add-char-modal').style.display = 'none';
+    }
+
+    // 觸發隱藏的檔案上傳框
+    function triggerJsonUpload() {
+      document.getElementById('json-file-input').click();
+    }
+
+    // 處理選擇檔案上傳
+    function handleJsonFileSelect(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const content = e.target.result;
+        parseAndApplyCharacterJson(content, file.name);
+      };
+      reader.onerror = function() {
+        alert('讀取檔案失敗！');
+      };
+      reader.readAsText(file);
+      // 清空 input 避免選同一檔案無法觸發
+      event.target.value = '';
+    }
+
+    // 切換直接貼上 JSON 文本框
+    function togglePasteJsonBox() {
+      const box = document.getElementById('paste-json-container');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      if (box.style.display === 'block') {
+        document.getElementById('pasted-json-text').focus();
+      }
+    }
+
+    // 解析貼上的 JSON 文本
+    function parsePastedJson() {
+      const text = document.getElementById('pasted-json-text').value.trim();
+      if (!text) {
+        alert('請先貼上 JSON 內容！');
+        return;
+      }
+      parseAndApplyCharacterJson(text, '貼上之文字');
+    }
+
+    // 核心：智慧相容多種格式之 JSON 解析器
+    function parseAndApplyCharacterJson(jsonString, sourceName) {
+      try {
+        let raw = JSON.parse(jsonString);
+
+        // 相容 SillyTavern V2 包裝結構 (raw.data)
+        const data = raw.data || raw;
+
+        // 提取姓名
+        const name = data.name || data.char_name || data.character_name || data.title || '';
+
+        // 提取身分/職業
+        const role = data.role || data.occupation || data.creator_notes || data.creator || '自訂角色';
+
+        // 提取人設特質（組合 personality / description / persona）
+        let traits = data.traits || '';
+        if (!traits) {
+          const parts = [];
+          if (data.personality) parts.push(`【性格】${data.personality}`);
+          if (data.description) parts.push(`【描述】${data.description}`);
+          if (data.scenario) parts.push(`【場景】${data.scenario}`);
+          traits = parts.join('\n\n');
+        }
+
+        // 提取開場白 (opening / first_mes / greeting)
+        let opening = data.opening || data.first_mes || data.greeting || data.initial_message || '';
+        if (typeof opening === 'object' && opening.rp) {
+          opening = opening.rp;
+        }
+
+        // 提取進階狀態（若有的話）
+        const affinity = parseInt(data.affinity || data.initialState?.affinity) || 20;
+        const tension = parseInt(data.tension || data.initialState?.tension) || 30;
+        const dominance = parseInt(data.dominance || data.initialState?.dominance) || 50;
+        const thought = data.thought || data.internal_thought || '這場對話正按著未知的方式展開……';
+        const flags = Array.isArray(data.flags) ? data.flags : ['#自訂JSON角色', '#新劇本'];
+
+        // 填入 DOM 表單
+        if (name) document.getElementById('new-char-name').value = name;
+        if (role) document.getElementById('new-char-role').value = role;
+        if (traits) document.getElementById('new-char-traits').value = traits;
+        if (opening) document.getElementById('new-char-opening').value = opening;
+
+        // 保存暫存狀態
+        tempJsonMetadata = { affinity, tension, dominance, thought, flags };
+
+        // 顯示成功狀態提示
+        const statusEl = document.getElementById('json-parse-status');
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = `✅ 成功解析來源【${sourceName || 'JSON'}】！已自動填入角色<strong>「${name || '未知姓名'}」</strong>的資料，確認後點擊下方按鈕即可載入。`;
+
+        // 滾動讓使用者看到填入內容
+        document.getElementById('new-char-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      } catch (err) {
+        console.error('JSON 解析錯誤:', err);
+        alert('JSON 格式解析失敗，請確認是否為合法的 JSON 格式！\n錯誤訊息: ' + err.message);
+      }
+    }
+
+    // 拖曳上傳監聽
+    function setupJsonDropZone() {
+      const dropZone = document.getElementById('json-drop-zone');
+      if (!dropZone || dropZone.dataset.setup) return;
+      dropZone.dataset.setup = 'true';
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#70b8ff';
+        dropZone.style.background = '#1a2333';
+      });
+
+      dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--accent-blue)';
+        dropZone.style.background = '#11151f';
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--accent-blue)';
+        dropZone.style.background = '#11151f';
+        const file = e.dataTransfer?.files?.[0];
+        if (file && file.name.endsWith('.json')) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            parseAndApplyCharacterJson(evt.target.result, file.name);
+          };
+          reader.readAsText(file);
+        } else {
+          alert('請拖曳 .json 格式的檔案！');
+        }
+      });
+    }
+
+    // 下載範例 JSON 檔案
+    function downloadSampleJson() {
+      const sampleData = {
+        name: "沈淮安",
+        role: "私人俱樂部調酒師 (Dominant)",
+        traits: "表面溫和優雅，善於聆聽；私下眼神極具侵略性，擅長用言語步步緊逼，享受掌控全場節奏。",
+        opening: "*吧台的燈光昏黃柔和，爵士樂在空氣中慵懶地流淌。*\n*他慢條斯理地用白毛巾擦拭著手中的高腳杯，目光在妳坐下時微微抬起。*\n\n<div class=\"dialogue-line\">這個時間點進來，看來妳今晚不想太早回去。</div>",
+        thought: "這傢伙今天看起來格外動搖……點哪種酒能讓她徹底放鬆呢。",
+        affinity: 25,
+        tension: 40,
+        dominance: 65,
+        flags: ["#深夜吧台", "#專屬特調", "#微醺氛圍"]
+      };
+
+      const blob = new Blob([JSON.stringify(sampleData, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = "sample_character.json";
+      a.click();
     }
 
     function saveNewCharacter() {
@@ -1331,14 +1585,21 @@
       }
 
       const id = 'custom_' + Date.now();
+      const meta = tempJsonMetadata || {};
+
       CHARACTERS[id] = {
         id: id,
         name: name,
         role: role,
         traits: traits || '個性神秘，具有強烈的個人魅力。',
-        initialState: { affinity: 20, tension: 30, dominance: 50, stamina: 0 },
-        flags: ['#自訂角色', '#新對話'],
-        thought: '這場對話正按著未知的方式展開……',
+        initialState: {
+          affinity: meta.affinity || 20,
+          tension: meta.tension || 30,
+          dominance: meta.dominance || 50,
+          stamina: 0
+        },
+        flags: meta.flags || ['#自訂角色', '#新對話'],
+        thought: meta.thought || '這場對話正按著未知的方式展開……',
         opening: {
           rp: opening || `*房間裡一片寂靜。${name}抬起眼看著妳。*\n\n<div class="dialogue-line">有什麼事嗎？</div>`,
           novel: opening ? opening.replace(/\*/g, '') : `${name}站在燈光下，目光平靜地注視著妳。「有什麼事嗎？」`

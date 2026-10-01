@@ -1,0 +1,20 @@
+# 1. 敏感金鑰與環境變數（絕對不公開）
+.env
+.env.local
+*.pem
+
+# 2. 玩家個人存檔記錄（忽略 json 存檔，但保留目錄）
+saves/*
+!saves/.gitkeep
+*.log
+
+# 3. 程式執行與依賴套件
+node_modules/
+dist/
+build/
+
+# 4. 作業系統與編輯器快取
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

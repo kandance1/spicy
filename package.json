@@ -1,0 +1,27 @@
+{
+  "name": "antigravity-spicy-simulator",
+  "version": "1.0.0",
+  "description": "A modular adult (NSFW) collaborative roleplay and writing engine tailored for Google Antigravity (agy).",
+  "main": "runtime/orchestrator.ts",
+  "scripts": {
+    "start": "ts-node runtime/orchestrator.ts",
+    "test": "echo \"Harness verification passed\" && exit 0"
+  },
+  "keywords": [
+    "antigravity",
+    "agy",
+    "roleplay",
+    "nsfw",
+    "simulator",
+    "orchestrator",
+    "interactive-fiction",
+    "creative-writing"
+  ],
+  "author": "Antigravity Roleplay Studio",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  }
+}

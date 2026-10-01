@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antigravity Spicy Roleplay Simulator｜成人角色扮演寫作模擬器</title>
+  <style>
+    :root {
+      --bg-primary: #0a0c10;
+      --bg-secondary: #12161f;
+      --bg-card: #181d28;
+      --border-color: #273042;
+      --accent-blue: #4fa1f2;
+      --accent-glow: rgba(79, 161, 242, 0.25);
+      --accent-crimson: #e64960;
+      --accent-gold: #e5b358;
+      --accent-purple: #a855f7;
+      --text-main: #e6edf3;
+      --text-muted: #8b98aa;
+      --text-dim: #4f5a6b;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+    }
+
+    /* 頂部 Header */
+    header {
+      background-color: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-crimson));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: white;
+      box-shadow: 0 0 10px rgba(230, 73, 96, 0.4);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      background: rgba(79, 161, 242, 0.15);
+      border: 1px solid var(--accent-blue);
+      color: var(--accent-blue);
+      border-radius: 12px;
+      font-family: var(--font-mono);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      border: none;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-blue);
+      background: #202736;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.95;
+    }
+
+    /* 主雙欄佈局 */
+    .layout-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 61px);
+      overflow: hidden;
+    }
+
+    /* 左側：Orchestrator 監控 HUD */
+    .sidebar {
+      width: 380px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .sidebar-section {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* 角色列表與管理 */
+    .char-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .char-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .char-card.active {
+      border-color: var(--accent-blue);
+      background: rgba(79, 161, 242, 0.08);
+      box-shadow: 0 0 10px rgba(79, 161, 242, 0.15);
+    }
+
+    .char-info {
+      text-align: left;
+    }
+
+    .char-name {
+      font-weight: 700;
+      font-size: 14px;
+      display: block;
+    }
+
+    .char-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .btn-add-char {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed var(--border-color);
+      color: var(--text-muted);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .btn-add-char:hover {
+      border-color: var(--accent-blue);
+      color: var(--text-main);
+    }
+
+    /* 文體切換器 */
+    .style-switch {
+      display: flex;
+      background: #0d1017;
+      border-radius: 6px;
+      padding: 3px;
+      border: 1px solid var(--border-color);
+    }
+
+    .style-option {
+      flex: 1;
+      text-align: center;
+      padding: 6px;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .style-option.active {
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-weight: 600;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    /* 狀態計量條 */
+    .stat-row {
+      margin-bottom: 14px;
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-val {
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 7px;
+      background: #1e2430;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .fill-affinity { background: linear-gradient(90deg, #ec4899, #f43f5e); }
+    .fill-tension { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .fill-dominance { background: linear-gradient(90deg, #8b5cf6, #3b82f6); }
+
+    /* 耐力抗壓指示器 */
+    .stamina-box {
+      background: #18202c;
+      border: 1px solid #28364a;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .stamina-badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 6px;
+      background: rgba(229, 179, 88, 0.15);
+      border: 1px solid var(--accent-gold);
+      color: var(--accent-gold);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      margin-bottom: 6px;
+    }
+
+    /* 角色心聲解密區 (Internal Thought Blackbox) */
+    .thought-blackbox {
+      background: #0b0e14;
+      border: 1px dashed #343f52;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+    }
+
+    .thought-tag {
+      font-size: 11px;
+      color: var(--accent-crimson);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+
+    .thought-text {
+      color: #cbd5e1;
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    .trigger-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .trigger-pill {
+      font-size: 11px;
+      background: #1d2433;
+      color: #94a3b8;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid #2e394e;
+    }
+
+    /* 右側：故事與對話舞台 */
+    .main-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+
+    .scene-banner {
+      background: rgba(18, 22, 31, 0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 24px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .scene-title-bold {
+      font-weight: 600;
+      color: var(--accent-blue);
+    }
+
+    /* 故事滾動容器 */
+    .story-scroll-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .message-card {
+      max-width: 820px;
+      margin: 0 auto;
+      width: 100%;
+      border-radius: 10px;
+      padding: 18px 22px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-character {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .msg-user {
+      background: #172233;
+      border: 1px solid #294063;
+      align-self: flex-end;
+    }
+
+    .msg-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .msg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+    }
+
+    .msg-sender {
+      font-size: 14px;
+      font-weight: 600;
+      color: #93c5fd;
+    }
+
+    .msg-time {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    .prose-content {
+      font-size: 15px;
+      line-height: 1.85;
+      color: #d1d5db;
+    }
+
+    .prose-content em {
+      color: #94a3b8;
+      font-style: normal;
+      background: rgba(148, 163, 184, 0.06);
+      padding: 2px 4px;
+      border-radius: 4px;
+      display: block;
+      margin: 8px 0;
+    }
+
+    .dialogue-line {
+      font-size: 17px;
+      font-weight: 600;
+      color: #f3f4f6;
+      padding: 8px 0;
+      letter-spacing: 0.3px;
+      border-left: 3px solid var(--accent-blue);
+      padding-left: 12px;
+      margin: 12px 0;
+    }
+
+    /* 三歧路引導卡片 */
+    .path-options-container {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .path-options-title {
+      font-size: 12px;
+      color: var(--accent-gold);
+      font-family: var(--font-mono);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .paths-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .path-btn {
+      background: #10141d;
+      border: 1px solid #232d3d;
+      border-radius: 6px;
+      padding: 10px 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .path-btn:hover {
+      background: #182233;
+      border-color: var(--accent-blue);
+      transform: translateX(3px);
+    }
+
+    .path-tag {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .tag-a { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+    .tag-b { background: rgba(230, 73, 96, 0.2); color: var(--accent-crimson); }
+    .tag-c { background: rgba(229, 179, 88, 0.2); color: var(--accent-gold); }
+
+    .path-desc {
+      font-size: 13px;
+      color: #e2e8f0;
+      line-height: 1.4;
+    }
+
+    /* 底部輸入操作欄 */
+    .input-bar-container {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      padding: 16px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .input-tools {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    textarea#action-input {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      height: 60px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    textarea#action-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .btn-send {
+      height: 60px;
+      padding: 0 24px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      font-weight: 700;
+      border-radius: 8px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-send:hover { opacity: 0.95; }
+    .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Modal 對話框 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 560px;
+      max-width: 90vw;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 13px;
+    }
+
+    textarea.form-input { resize: vertical; height: 80px; }
+
+    .typing-indicator {
+      display: inline-flex;
+      gap: 4px;
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      width: fit-content;
+      margin: 0 auto;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-blue);
+      border-radius: 50%;
+      animation: pulse 1.2s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1.2); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部 Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">A</div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="brand-title">Antigravity Spicy Simulator</span>
+          <span class="brand-badge">NSFW 18+ Clean Engine</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" onclick="exportStoryMarkdown()">匯出 Markdown</button>
+      <button class="btn-secondary" onclick="openSettingsModal()">引擎設定</button>
+      <button class="btn-secondary" onclick="resetCurrentSession()">重設回合</button>
+    </div>
+  </header>
+
+  <!-- 主佈局 -->
+  <div class="layout-container">
+
+    <!-- 左側：Orchestrator 監控 HUD -->
+    <aside class="sidebar">
+      <!-- 角色選擇與管理 -->
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>登場角色 (Subagents)</span>
+          <span style="color: var(--accent-blue);" id="subagent-status">Active</span>
+        </div>
+        <div class="char-list" id="char-list-container">
+          <!-- 動態載入角色卡片 -->
+        </div>
+        <button class="btn-add-char" onclick="openAddCharModal()">➕ 建立 / 導入自訂角色 (Custom Agent)</button>
+      </div>
+
+      <!-- 文體切換 -->
+      <div class="sidebar-section">
+        <div class="section-title">文體引擎 (Style Engine)</div>
+        <div class="style-switch">
+          <div class="style-option active" id="opt-rp" onclick="setStyleMode('immersive_rp')">慢燉對戲體 (RP)</div>
+          <div class="style-option" id="opt-novel" onclick="setStyleMode('literary_novel')">文學小說體 (Fox)</div>
+        </div>
+      </div>
+
+      <!-- 狀態數值矩陣 -->
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>動態狀態機 (State Matrix)</span>
+          <span style="font-size: 10px; color: var(--text-dim);">XML Intercepted</span>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-header">
+            <span class="stat-label">💗 好感度 (Affinity)</span>
+            <span class="stat-val" id="val-affinity" style="color: #f43f5e;">20%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill fill-affinity" id="bar-affinity" style="width: 20%;"></div>
+          </div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-header">
+            <span class="stat-label">🔥 性張力 (Tension)</span>
+            <span class="stat-val" id="val-tension" style="color: #ef4444;">35%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill fill-tension" id="bar-tension" style="width: 35%;"></div>
+          </div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-header">
+            <span class="stat-label">⚡ 主導權 (Dominance)</span>
+            <span class="stat-val" id="val-dominance" style="color: #3b82f6;">55% (角色)</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill fill-dominance" id="bar-dominance" style="width: 55%;"></div>
+          </div>
+        </div>
+
+        <!-- 耐力計數 -->
+        <div class="stamina-box">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 600;">耐力慢燉抗壓 (Stamina)</span>
+            <span class="stamina-badge" id="stamina-badge">0 / 4 回合</span>
+          </div>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+            Harness 守則：高張力對抗未推進滿 4 回合前，嚴禁急躁收尾或早洩。
+          </p>
+        </div>
+      </div>
+
+      <!-- 角色心聲解密區 -->
+      <div class="sidebar-section" style="border-bottom: none;">
+        <div class="section-title">
+          <span>角色真實心聲 (Internal Thought)</span>
+          <span style="font-size: 10px; color: var(--accent-crimson);">Decrypted</span>
+        </div>
+        <div class="thought-blackbox">
+          <div class="thought-tag">
+            <span>●</span> <span>未說出口的心聲 (Orchestrator 隔離提取)</span>
+          </div>
+          <div class="thought-text" id="internal-thought-display">
+            「……真以為我看不出妳是在故意試探？」
+          </div>
+          <div class="trigger-tags" id="trigger-tags-list">
+            <span class="trigger-pill">#初始接觸</span>
+            <span class="trigger-pill">#領地邊界</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右側：主舞台 -->
+    <main class="main-stage">
+      <div class="scene-banner">
+        <div>
+          <span>當前對戲：</span>
+          <span class="scene-title-bold" id="current-char-display">神秘同行者</span>
+          <span style="color: var(--text-dim); margin: 0 8px;">|</span>
+          <span style="color: var(--text-muted); font-size: 12px;">Harness: No-Puppeteering ACTIVE</span>
+        </div>
+        <div>
+          <span style="font-size: 12px; color: var(--accent-gold);">● 虛構 18+ 空間</span>
+        </div>
+      </div>
+
+      <!-- 故事訊息捲動區 -->
+      <div class="story-scroll-container" id="story-container"></div>
+
+      <!-- 底部輸入操作欄 -->
+      <div class="input-bar-container">
+        <div class="input-tools">
+          <span>支援三歧路一鍵推進或手動行動輸入</span>
+          <span style="font-size: 11px; color: var(--text-dim);">Shift+Enter 換行，Enter 送出</span>
+        </div>
+
+        <div class="input-row">
+          <textarea id="action-input" placeholder="輸入妳的行動或對白（例如：妳上前一步，指尖按上他的袖扣...）" onkeydown="handleInputKey(event)"></textarea>
+          <button class="btn-send" id="btn-send-action" onclick="submitUserAction()">
+            <span>推進</span>
+            <span>➔</span>
+          </button>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- 新增/編輯自訂角色 Modal -->
+  <div class="modal-overlay" id="add-char-modal" onclick="closeAddCharModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">建立 / 導入自訂角色模組 (New Character)</div>
+        <button class="btn-secondary" onclick="closeAddCharModal()">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">角色姓名 / 稱謂</label>
+        <input type="text" class="form-input" id="new-char-name" placeholder="例如：維克多、沈先生、艾倫">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">身份定位 / 職業 (18+ 成年)</label>
+        <input type="text" class="form-input" id="new-char-role" placeholder="例如：冷酷私人執事、強勢上司、禁慾學者">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">核心性格與情慾反差</label>
+        <textarea class="form-input" id="new-char-traits" placeholder="例如：表面冷靜疏離、極端自持；被挑釁時佔有欲極強，手指撫摸帶有壓迫感與停頓。"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">首輪開場白（動作與對白）</label>
+        <textarea class="form-input" id="new-char-opening" placeholder="*昏暗的房間裡，他緩緩放下手中的酒杯，視線落在妳身上。*\n\n很晚了，妳不該現在出現在這裡。"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+        <button class="btn-secondary" onclick="closeAddCharModal()">取消</button>
+        <button class="btn-primary" onclick="saveNewCharacter()">建立並載入角色</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API 設定 Modal -->
+  <div class="modal-overlay" id="settings-modal" onclick="closeSettingsModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">Antigravity 引擎與 API 設定</div>
+        <button class="btn-secondary" onclick="closeSettingsModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">推演引擎模式</label>
+        <select class="form-input" id="engine-mode-select" onchange="toggleEngineInputs()">
+          <option value="local">純本機智慧推演引擎 (內建慢燉 NSFW 語料，即刻體驗)</option>
+          <option value="gemini">Google Gemini API (線上高階大腦)</option>
+        </select>
+      </div>
+      <div class="form-group" id="gemini-key-group" style="display: none;">
+        <label class="form-label">Gemini API Key</label>
+        <input type="password" class="form-input" id="gemini-api-key" placeholder="AIzaSy...">
+        <span style="font-size: 11px; color: var(--text-dim); margin-top: 4px; display: block;">
+          金鑰僅儲存在瀏覽器本機記憶體，完全保密。
+        </span>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+        <button class="btn-secondary" onclick="closeSettingsModal()">取消</button>
+        <button class="btn-primary" onclick="saveSettings()">儲存設定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Antigravity Spicy Generic Roleplay Engine
+     * 純通用、無綁定寫死角色之 NSFW 角色扮演模擬器
+     */
+
+    // 角色庫存儲（預設提供 2 個經典通用範本，使用者可隨時新增）
+    const CHARACTERS = {
+      'mystic_escort': {
+        id: 'mystic_escort',
+        name: '神秘同行者 (Dominant)',
+        role: '深沉克制・居高臨下・強勢主導',
+        traits: '習慣掌控全場節奏，冷靜內斂；眼神極具穿透力，動作帶著不疾不徐的壓迫感。',
+        initialState: { affinity: 20, tension: 35, dominance: 65, stamina: 0 },
+        flags: ['#初次獨處', '#封閉空間'],
+        thought: '這傢伙總愛用這種危險的距離試探我……',
+        opening: {
+          rp: `*昏暗的房間裡只剩下百葉窗透進來的微弱月光。室內飄散著雪松與冷冽的微香。*\n*他站在酒櫃旁，修長的手指漫不經心地轉動著手中的厚底水晶杯，冰塊與玻璃碰撞出清脆的脆響。*\n*聽見身後的腳步聲，他沒有立刻回頭，只是將酒杯擱在胡桃木桌上，發出一聲沉悶的輕響。*\n\n<div class="dialogue-line">門已經反鎖了。妳現在才想著要退後，是不是太晚了點？</div>\n\n*他慢慢轉過身，目光落在妳身上，黑眸沉靜得沒有一絲波瀾，但空氣裡的溫度卻在一瞬間降到了凝固點。*`,
+          novel: `厚重的木門在身後合上時發出沉悶的喀噠聲。室內只有幾盞昏黃的壁燈，他隨手解開了襯衫最上面的兩顆鈕扣，露出線條分明的鎖骨。聽見妳進來的動靜，他垂著眼將酒杯放在桌上，眼神居高臨下地掃過妳微亂的衣角。「門已經反鎖了。妳現在才想著要退後，是不是太晚了點？」低沉的嗓音像在宣告獵物已經落入網中。`
+        },
+        initialPaths: {
+          a: '迎上他的目光挑釁：「誰說我是來退後的？你杯子裡的酒分我一口。」',
+          b: '走上前伸手扣住他微敞的襯衫衣領，指尖撫過發燙的鎖骨。',
+          c: '窗外突然響起一陣急促的敲門聲與走廊腳步聲，兩人同時安靜下來。'
+        }
+      },
+      'calm_scholar': {
+        id: 'calm_scholar',
+        name: '禁慾學者 (Submissive/Tease)',
+        role: '斯文禁慾・銀邊眼鏡・易被挑逗',
+        traits: '極度自持、理性嚴謹；被越界觸碰時呼吸會亂，耳根發燙但嘴上依然維持冷靜。',
+        initialState: { affinity: 30, tension: 40, dominance: 45, stamina: 0 },
+        flags: ['#私人書房', '#鏡框微滑'],
+        thought: '心跳太快了……得把眼鏡扶好，不能被看出破綻。',
+        opening: {
+          rp: `*安靜的私人書房裡瀰漫著舊紙張與墨水的乾燥氣味。*\n*他坐在厚重的書桌後，銀邊眼鏡架在高挺的鼻樑上，手指正翻過一頁密密麻麻的手稿。*\n*妳靠近桌沿時，他翻書的手指幾不可查地停頓了一下，隨後抬手扶了扶眼鏡，指尖微不可察地繃緊。*\n\n<div class="dialogue-line">這些資料很繁瑣。如果妳不是來幫忙整理的……請不要站在我的光線前。</div>\n\n*他抬起眼眸，神情看似平靜無波，但起伏略急的喉結暴露了他並非表面那般心無旁騖。*`,
+          novel: `書房裡靜得能聽見時鐘的滴答聲。他坐在書桌後低頭審閱文件，銀邊眼鏡遮住了眼底翻湧的神色。當妳的手按在書桌邊緣時，他終於停下手中的鋼筆，目光落在妳貼近的距離上。「這些資料很繁瑣。如果妳不是來幫忙整理的……請不要站在我的光線前。」他的語調很穩，但微微握緊鋼筆的指節卻洩露了心緒。`
+        },
+        initialPaths: {
+          a: '傾身撐在書桌上：「整整半個小時，你的手稿一頁都沒翻過去。」',
+          b: '伸手輕輕摘下他的銀邊眼鏡，手指擦過他滾燙的耳垂。',
+          c: '桌上的檯燈突然閃爍了一下熄滅，整個書房陷入伸手不見五指的黑暗。'
+        }
+      }
+    };
+
+    // 當前執行狀態
+    const state = {
+      currentCharId: 'mystic_escort',
+      styleMode: 'immersive_rp',
+      affinity: 20,
+      tension: 35,
+      dominance: 65,
+      staminaRounds: 0,
+      flags: ['#初次獨處', '#封閉空間'],
+      lastThought: '這傢伙總愛用這種危險的距離試探我……',
+      engineMode: 'local',
+      apiKey: '',
+      history: []
+    };
+
+    window.onload = function() {
+      renderCharList();
+      loadCharacter('mystic_escort');
+    };
+
+    function renderCharList() {
+      const container = document.getElementById('char-list-container');
+      container.innerHTML = '';
+
+      Object.values(CHARACTERS).forEach(c => {
+        const div = document.createElement('div');
+        div.className = `char-card ${c.id === state.currentCharId ? 'active' : ''}`;
+        div.onclick = () => loadCharacter(c.id);
+        div.innerHTML = `
+          <div class="char-info">
+            <span class="char-name">${c.name}</span>
+            <span class="char-desc">${c.role}</span>
+          </div>
+          <span style="font-size: 11px; color: var(--text-dim); font-family: var(--font-mono);">Agent</span>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function loadCharacter(charId) {
+      const char = CHARACTERS[charId];
+      if (!char) return;
+
+      state.currentCharId = charId;
+      state.affinity = char.initialState.affinity;
+      state.tension = char.initialState.tension;
+      state.dominance = char.initialState.dominance;
+      state.staminaRounds = char.initialState.stamina;
+      state.flags = [...char.flags];
+      state.lastThought = char.thought;
+
+      document.getElementById('current-char-display').innerText = char.name;
+
+      renderCharList();
+
+      state.history = [{
+        role: 'assistant',
+        narrative: char.opening[state.styleMode === 'immersive_rp' ? 'rp' : 'novel'],
+        paths: char.initialPaths,
+        thought: char.thought
+      }];
+
+      updateHUD();
+      renderStory();
+    }
+
+    function updateHUD() {
+      state.affinity = Math.max(0, Math.min(100, state.affinity));
+      state.tension = Math.max(0, Math.min(100, state.tension));
+      state.dominance = Math.max(0, Math.min(100, state.dominance));
+
+      document.getElementById('val-affinity').innerText = `${state.affinity}%`;
+      document.getElementById('bar-affinity').style.width = `${state.affinity}%`;
+
+      document.getElementById('val-tension').innerText = `${state.tension}%`;
+      document.getElementById('bar-tension').style.width = `${state.tension}%`;
+
+      const domWho = state.dominance >= 50 ? '角色' : '玩家';
+      document.getElementById('val-dominance').innerText = `${state.dominance}% (${domWho})`;
+      document.getElementById('bar-dominance').style.width = `${state.dominance}%`;
+
+      const badge = document.getElementById('stamina-badge');
+      badge.innerText = `${state.staminaRounds} / 4 回合`;
+      if (state.staminaRounds >= 4) {
+        badge.style.background = 'rgba(230, 73, 96, 0.2)';
+        badge.style.borderColor = '#e64960';
+        badge.style.color = '#e64960';
+        badge.innerText = `${state.staminaRounds} 回合 (峰值已就緒)`;
+      } else {
+        badge.style.background = 'rgba(229, 179, 88, 0.15)';
+        badge.style.borderColor = 'var(--accent-gold)';
+        badge.style.color = 'var(--accent-gold)';
+      }
+
+      document.getElementById('internal-thought-display').innerText = `「${state.lastThought}」`;
+      const tagsContainer = document.getElementById('trigger-tags-list');
+      tagsContainer.innerHTML = '';
+      state.flags.forEach(f => {
+        const span = document.createElement('span');
+        span.className = 'trigger-pill';
+        span.innerText = f;
+        tagsContainer.appendChild(span);
+      });
+    }
+
+    function renderStory() {
+      const container = document.getElementById('story-container');
+      container.innerHTML = '';
+
+      state.history.forEach((msg, idx) => {
+        const card = document.createElement('div');
+        const isUser = msg.role === 'user';
+        card.className = `message-card ${isUser ? 'msg-user' : 'msg-character'}`;
+
+        const senderName = isUser ? '妳 (Player)' : CHARACTERS[state.currentCharId].name;
+        const avatarLetter = isUser ? 'U' : 'A';
+
+        let innerHTML = `
+          <div class="msg-header">
+            <div class="msg-avatar">${avatarLetter}</div>
+            <span class="msg-sender">${senderName}</span>
+            <span class="msg-time">Round #${Math.floor(idx/2) + 1}</span>
+          </div>
+          <div class="prose-content">${formatNarrativeText(msg.narrative)}</div>
+        `;
+
+        if (!isUser && msg.paths && idx === state.history.length - 1) {
+          innerHTML += `
+            <div class="path-options-container">
+              <div class="path-options-title">
+                <span>✦</span> <span>Orchestrator 三歧路引導 (Three Path Options)：點選即刻推進</span>
+              </div>
+              <div class="paths-grid">
+                ${msg.paths.a ? `
+                  <button class="path-btn" onclick="selectPathOption('${escapeHtml(msg.paths.a)}')">
+                    <span class="path-tag tag-a">Path A (心理)</span>
+                    <span class="path-desc">${msg.paths.a}</span>
+                  </button>
+                ` : ''}
+                ${msg.paths.b ? `
+                  <button class="path-btn" onclick="selectPathOption('${escapeHtml(msg.paths.b)}')">
+                    <span class="path-tag tag-b">Path B (肉體)</span>
+                    <span class="path-desc">${msg.paths.b}</span>
+                  </button>
+                ` : ''}
+                ${msg.paths.c ? `
+                  <button class="path-btn" onclick="selectPathOption('${escapeHtml(msg.paths.c)}')">
+                    <span class="path-tag tag-c">Path C (混沌)</span>
+                    <span class="path-desc">${msg.paths.c}</span>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }
+
+        card.innerHTML = innerHTML;
+        container.appendChild(card);
+      });
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function formatNarrativeText(text) {
+      if (!text) return '';
+      let formatted = text.replace(/\n\n/g, '<br><br>');
+      formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      return formatted;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function selectPathOption(pathText) {
+      document.getElementById('action-input').value = pathText;
+      submitUserAction();
+    }
+
+    function setStyleMode(mode) {
+      state.styleMode = mode;
+      document.getElementById('opt-rp').classList.toggle('active', mode === 'immersive_rp');
+      document.getElementById('opt-novel').classList.toggle('active', mode === 'literary_novel');
+    }
+
+    function handleInputKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitUserAction();
+      }
+    }
+
+    async function submitUserAction() {
+      const inputEl = document.getElementById('action-input');
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      inputEl.value = '';
+      inputEl.disabled = true;
+      document.getElementById('btn-send-action').disabled = true;
+
+      state.history.push({ role: 'user', narrative: text });
+      renderStory();
+
+      const container = document.getElementById('story-container');
+      const typingIndicator = document.createElement('div');
+      typingIndicator.className = 'typing-indicator';
+      typingIndicator.id = 'typing-indicator-box';
+      typingIndicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      container.appendChild(typingIndicator);
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const responseData = await generateNextTurn(text);
+        const ind = document.getElementById('typing-indicator-box');
+        if (ind) ind.remove();
+
+        if (responseData.stateUpdate) {
+          state.affinity += responseData.stateUpdate.affinity_delta || 0;
+          state.tension += responseData.stateUpdate.tension_delta || 0;
+          state.dominance += responseData.stateUpdate.dominance_delta || 0;
+          state.staminaRounds += responseData.stateUpdate.stamina_round_increment || 1;
+          if (responseData.stateUpdate.internal_thought) {
+            state.lastThought = responseData.stateUpdate.internal_thought;
+          }
+          if (responseData.stateUpdate.trigger_flags) {
+            responseData.stateUpdate.trigger_flags.forEach(f => {
+              if (!state.flags.includes(f)) state.flags.push(f);
+            });
+          }
+        }
+
+        state.history.push({
+          role: 'assistant',
+          narrative: responseData.sanitizedNarrative,
+          paths: responseData.paths,
+          thought: state.lastThought
+        });
+
+        updateHUD();
+        renderStory();
+
+      } catch (err) {
+        console.error('生成失敗:', err);
+        alert('推演失敗：' + err.message);
+      } finally {
+        inputEl.disabled = false;
+        document.getElementById('btn-send-action').disabled = false;
+        inputEl.focus();
+      }
+    }
+
+    async function generateNextTurn(userInput) {
+      if (state.engineMode === 'gemini' && state.apiKey) {
+        return await callGeminiAPI(userInput);
+      } else {
+        return await genericLocalSimulation(userInput);
+      }
+    }
+
+    // 通用慢燉 NSFW 本機推演演算法
+    async function genericLocalSimulation(userInput) {
+      await new Promise(r => setTimeout(r, 800));
+
+      const char = CHARACTERS[state.currentCharId];
+      const isRp = state.styleMode === 'immersive_rp';
+      const round = state.staminaRounds + 1;
+
+      let affinityDelta = 3;
+      let tensionDelta = 6;
+      let dominanceDelta = 1;
+      let thought = '';
+      let narrative = '';
+      let paths = {};
+
+      if (userInput.includes('酒') || userInput.includes('杯') || userInput.includes('眼') || userInput.includes('靠近')) {
+        tensionDelta = 7;
+        dominanceDelta = 2;
+        thought = '靠得太近了……空氣幾乎燒起來了，真當我是聖人嗎。';
+        narrative = isRp ?
+          `*他將目光緩慢移到妳臉上，沒有立刻開口，修長的手指順著冰冷的高腳杯緣輕輕打轉了一圈。*\n*空氣沉得像吸飽了雨水的羊毛毯。他微微傾身，彼此之間的距離被壓縮到連呼吸的熱度都無所遁形。*\n\n<div class="dialogue-line">妳的膽子比我想像的要大很多。</div>\n\n*他的聲音低啞得帶著細碎的砂礫感，指尖在收回時似有若無地劃過妳的腕骨，帶起一陣隱秘的戰慄。*` :
+          `昏暗的光線下，兩人間的距離被迅速拉近。他垂著眸，視線在妳唇邊停留了片刻，隨後將手中的酒杯隨手擱在身後。灼熱的氣息混雜著微苦的酒香迎面而來。「妳的膽子比我想像的要大很多。」他低聲道，修長有力的手掌自然地撐在妳身側，將妳的退路盡數封死。`;
+
+        paths = {
+          a: '仰頭輕笑一聲：「若不大膽，又怎麼能看見你現在這副眼神？」',
+          b: '抬手按住他微敞的胸口，感受掌心下急促撞擊的脈搏。',
+          c: '擺在桌緣的水晶杯因震動微微搖晃，發出清脆的危險預警。'
+        };
+      } else if (userInput.includes('摸') || userInput.includes('吻') || userInput.includes('抱') || userInput.includes('領帶')) {
+        affinityDelta = 4;
+        tensionDelta = 9;
+        dominanceDelta = -1;
+        thought = '指尖的溫度簡直是在縱火……快要壓不住了。';
+        narrative = isRp ?
+          `*神經末梢的觸感讓他的呼吸驀地停滯了一拍。*\n*他反手握住了妳的手腕，力道精確而克制，指腹重重壓在妳狂跳的脈搏上。停頓是武器——他定定地注視著妳，沒有退，也沒有進一步施壓。*\n\n<div class="dialogue-line">點火的人，往往不知道代價是什麼。</div>\n\n*滾燙的吐息直接擦過妳的耳際，那種瀕臨失控邊緣的壓抑比狂暴更加危險。*` :
+          `觸碰發生的一瞬間，他的肌肉明顯緊繃了起來。他沒有避開，而是順著這股力道將妳拉向自己。彼此的呼吸交纏在一起，灼燙得驚人。「點火的人，往往不知道代價是什麼。」他的話語極輕，卻像一道扣在頸側的枷鎖，眼底深處隱藏的掠奪感終於毫無保留地顯露了出來。`;
+
+        paths = {
+          a: '在耳畔輕聲吐息：「那麼，今晚的代價是什麼，由你來開價。」',
+          b: '掙開手腕反客為主，手指滑入他的髮間將距離徹底抹平。',
+          c: '鐘樓的沉悶鐘聲在夜色中敲響了第十二下，整座空間陷入深沉的共鳴。'
+        };
+      } else {
+        tensionDelta = 5;
+        thought = '隨意的一句話也能打亂我的心緒……麻煩的女人。';
+        narrative = isRp ?
+          `*他站在原地沉默了片刻，似乎在重新審視眼前這場對弈的規則。*\n*夜風撩起窗簾的一角，月光在他清冷的面部輪廓上切出一道鋒利的陰影。他慢慢邁開步子朝妳走來，鞋底在木質地板上敲出極有節奏的聲響。*\n\n<div class="dialogue-line">妳總是知道該挑什麼時候說這些。</div>\n\n*在距離妳半步之遙的位置停下，居高臨下的目光像一張細密的網。*` :
+          `他沒有立刻回應，只是意味深長地審視著妳。室內的沉默持續了幾秒，隨後他邁開步伐，將陰影徹底籠罩在妳上方。「妳總是知道該挑什麼時候說這些。」他低低笑了一聲，語調裡帶著幾分無奈與危險的縱容。`;
+
+        paths = {
+          a: '直視他的眼眸：「因為我知道，你每一句話都在認真聽。」',
+          b: '主動跨上半步，讓彼此的衣料在走動間細細摩挲。',
+          c: '走廊外傳來巡邏警衛的腳步聲，停在門前幾秒後漸漸遠去。'
+        };
+      }
+
+      return {
+        stateUpdate: {
+          affinity_delta: affinityDelta,
+          tension_delta: tensionDelta,
+          dominance_delta: dominanceDelta,
+          stamina_round_increment: 1,
+          trigger_flags: round >= 3 ? ['#張力逼近臨界'] : [],
+          internal_thought: thought
+        },
+        sanitizedNarrative: narrative,
+        paths: paths
+      };
+    }
+
+    async function callGeminiAPI(userInput) {
+      const apiKey = state.apiKey;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+      const char = CHARACTERS[state.currentCharId];
+
+      const systemPrompt = `
+你正在 Antigravity 環境下扮演 adult NSFW 角色：【${char.name}】（${char.role}）。
+人設背景：${char.traits}
+文體模式：${state.styleMode === 'immersive_rp' ? '沉浸慢燉 RP 體 (*星號動作* + 獨立成行聚光台詞)' : '文學情慾小說體 (Fox Show Don\'t Tell)'}
+嚴格遵循：
+1. 嚴禁代控玩家 (No Puppeteering)。
+2. 開頭必須輸出 <state_update> 包含數值增減與真實心聲。
+3. 結尾必須給出三歧路選項 (A/B/C)。
+4. 所有內容為 18+ 虛構角色創作。
+`;
+
+      const promptPayload = {
+        contents: [
+          { role: 'user', parts: [{ text: systemPrompt + "\n\n玩家輸入：" + userInput }] }
+        ]
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(promptPayload)
+      });
+
+      if (!res.ok) throw new Error(`API 請求失敗: ${res.statusText}`);
+
+      const data = await res.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      const stateRegex = /<state_update>([\s\S]*?)<\/state_update>/i;
+      const match = rawText.match(stateRegex);
+      let stateUpdate = null;
+      let cleanText = rawText;
+
+      if (match) {
+        try { stateUpdate = JSON.parse(match[1]); } catch(e){}
+        cleanText = rawText.replace(stateRegex, '').trim();
+      }
+
+      const pathA = (cleanText.match(/A[\(（][^\)]*[\)）][:：]?\s*([^\n]+)/) || [])[1] || '心理博弈推進';
+      const pathB = (cleanText.match(/B[\(（][^\)]*[\)）][:：]?\s*([^\n]+)/) || [])[1] || '肢體動作升級';
+      const pathC = (cleanText.match(/C[\(（][^\)]*[\)）][:：]?\s*([^\n]+)/) || [])[1] || '突發環境混沌';
+
+      return {
+        stateUpdate,
+        sanitizedNarrative: cleanText,
+        paths: { a: pathA, b: pathB, c: pathC }
+      };
+    }
+
+    // 新增/導入自訂角色
+    function openAddCharModal() {
+      document.getElementById('add-char-modal').style.display = 'flex';
+    }
+    function closeAddCharModal(e) {
+      document.getElementById('add-char-modal').style.display = 'none';
+    }
+
+    function saveNewCharacter() {
+      const name = document.getElementById('new-char-name').value.trim();
+      const role = document.getElementById('new-char-role').value.trim();
+      const traits = document.getElementById('new-char-traits').value.trim();
+      const opening = document.getElementById('new-char-opening').value.trim();
+
+      if (!name || !role) {
+        alert('請填寫角色姓名與身份！');
+        return;
+      }
+
+      const id = 'custom_' + Date.now();
+      CHARACTERS[id] = {
+        id: id,
+        name: name,
+        role: role,
+        traits: traits || '個性神秘，具有強烈的個人魅力。',
+        initialState: { affinity: 20, tension: 30, dominance: 50, stamina: 0 },
+        flags: ['#自訂角色', '#新對話'],
+        thought: '這場對話正按著未知的方式展開……',
+        opening: {
+          rp: opening || `*房間裡一片寂靜。${name}抬起眼看著妳。*\n\n<div class="dialogue-line">有什麼事嗎？</div>`,
+          novel: opening ? opening.replace(/\*/g, '') : `${name}站在燈光下，目光平靜地注視著妳。「有什麼事嗎？」`
+        },
+        initialPaths: {
+          a: '走上前直視他的雙眼：「你應該知道我為什麼會來。」',
+          b: '抬手碰觸他的手腕，打破兩人之間的距離。',
+          c: '身後的門突然傳來輕微的敲擊聲。'
+        }
+      };
+
+      closeAddCharModal();
+      renderCharList();
+      loadCharacter(id);
+      alert(`角色【${name}】已成功建立並載入！`);
+    }
+
+    function exportStoryMarkdown() {
+      let md = `# Antigravity Spicy Roleplay Log\n\n`;
+      md += `> 角色：${CHARACTERS[state.currentCharId].name} | 文體：${state.styleMode} | 時間：${new Date().toLocaleString()}\n\n---\n\n`;
+
+      state.history.forEach((msg, idx) => {
+        if (msg.role === 'user') {
+          md += `### ✦ 妳的行動\n\n${msg.narrative}\n\n`;
+        } else {
+          md += `### ✦ ${CHARACTERS[state.currentCharId].name}\n\n`;
+          if (msg.thought) md += `> *[內心心聲]* 「${msg.thought}」\n\n`;
+          md += `${msg.narrative}\n\n---\n\n`;
+        }
+      });
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `RP_${state.currentCharId}_${Date.now()}.md`;
+      a.click();
+    }
+
+    function resetCurrentSession() {
+      if (confirm('確定重設當前角色的對話進度嗎？')) {
+        loadCharacter(state.currentCharId);
+      }
+    }
+
+    function openSettingsModal() { document.getElementById('settings-modal').style.display = 'flex'; }
+    function closeSettingsModal(e) { document.getElementById('settings-modal').style.display = 'none'; }
+    function toggleEngineInputs() {
+      const mode = document.getElementById('engine-mode-select').value;
+      document.getElementById('gemini-key-group').style.display = mode === 'gemini' ? 'block' : 'none';
+    }
+    function saveSettings() {
+      state.engineMode = document.getElementById('engine-mode-select').value;
+      state.apiKey = document.getElementById('gemini-api-key').value.trim();
+      closeSettingsModal();
+      alert('設定已更新！當前模式：' + (state.engineMode === 'local' ? '純本機智慧引擎' : 'Gemini API'));
+    }
+  </script>
+</body>
+</html>
